@@ -1,0 +1,91 @@
+apiVersion: policy.open-cluster-management.io/v1
+kind: Policy
+metadata:
+  name: devsandbox
+  annotations:
+    policy.open-cluster-management.io/categories: Securité infrastructure
+    policy.open-cluster-management.io/controls: Configurations
+    policy.open-cluster-management.io/standards: Configurations
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: devsandbox
+        spec:
+          remediationAction: inform
+          severity: low
+          namespaceSelector:
+            include: 
+            - "devd-*"
+          object-templates:
+            - complianceType: musthave
+              objectDefinition:
+
+                kind: RoleBinding
+                apiVersion: rbac.authorization.k8s.io/v1
+                metadata:
+                  name: devsandbox-binding-developpeurs-dev-admin
+                subjects:
+                  - kind: Group
+                    name: demo-rbac-developpeurs
+                roleRef:
+                  apiGroup: rbac.authorization.k8s.io
+                  kind: ClusterRole
+                  name: admin
+
+            - complianceType: musthave
+              objectDefinition:
+
+                apiVersion: network.openshift.io/v1
+                kind: EgressNetworkPolicy
+                metadata:
+                  name: block-external-access
+                spec:
+                  egress:
+                    - type: Allow
+                      to:
+                        cidrSelector: 142.44.140.12/32
+
+                    - type: Allow
+                      to:
+                        dnsName: "www.redhat.com"
+
+                    - type: Deny
+                      to:
+                        cidrSelector: 0.0.0.0/0
+
+            - complianceType: musthave
+              objectDefinition:
+
+                apiVersion: networking.k8s.io/v1
+                kind: NetworkPolicy
+                metadata:
+                  name: allow-from-openshift-ingress
+                spec:
+                  ingress:
+                    - from:
+                        - namespaceSelector:
+                            matchLabels:
+                              network.openshift.io/policy-group: ingress
+                              
+                  podSelector:
+                    matchLabels:
+                      role: ui
+
+                  policyTypes:
+                    - Ingress
+
+            - complianceType: musthave
+              objectDefinition:
+
+                kind: NetworkPolicy
+                apiVersion: networking.k8s.io/v1
+                metadata:
+                  name: deny-by-default
+                spec:
+                  podSelector:
+                  ingress: []

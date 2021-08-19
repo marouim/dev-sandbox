@@ -1,0 +1,11 @@
+apiVersion: apps.open-cluster-management.io/v1
+kind: Channel
+metadata:
+  name: devsandbox
+  namespace: open-cluster-management
+  annotations:
+    apps.open-cluster-management.io/reconcile-rate: high
+    apps.open-cluster-management.io/webhook-enabled: "true"
+spec:
+    type: GitHub
+    pathname: https://github.com/marouim/dev-sandbox.git
